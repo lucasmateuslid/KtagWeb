@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { GoogleGenAI, FunctionDeclaration, Type } from "@google/genai";
+import { GoogleGenAI, FunctionDeclaration, Type, GenerateContentResponse } from "@google/genai";
 import { X, Send, Sparkles, Bot, BarChart3, MapPin, AlertTriangle, Tag as TagIcon, HelpCircle, CheckCircle2, Loader2, ClipboardCheck, ArrowRight, Plus, FileText, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { storage } from '../services/storage';
@@ -184,7 +184,6 @@ export const AiAssistant: React.FC = () => {
       }
 
       if (name === 'generate_pdf_report') {
-        // Lógica de Datas CRÍTICA: Pega do Hoje Real se não informado
         const now = new Date();
         const start = args.startDate ? new Date(args.startDate + 'T00:00:00').getTime() : now.getTime() - (7 * 24 * 60 * 60 * 1000);
         const end = args.endDate ? new Date(args.endDate + 'T23:59:59').getTime() : now.getTime();
@@ -202,9 +201,6 @@ export const AiAssistant: React.FC = () => {
         const soTag = filtered.filter(v => v.installationType !== 'tag_tracker').length;
         const tagTracker = total - soTag;
 
-        // --- DESIGN CONFORME IMAGEM DE REFERÊNCIA ---
-        
-        // 1. HEADER
         doc.setFont("helvetica", "bold");
         doc.setFontSize(24);
         doc.setTextColor(24, 24, 27);
@@ -216,8 +212,6 @@ export const AiAssistant: React.FC = () => {
         doc.text(`Período: ${new Date(start).toLocaleDateString()} - ${new Date(end).toLocaleDateString()}`, 14, 30);
         doc.text(`Gerado por: ${currentUser?.name || 'IA Assistant'} (System) em ${new Date().toLocaleString()}`, 14, 36);
 
-        // 2. DASHBOARD CARDS
-        // Total (Dark)
         doc.setFillColor(24, 24, 27);
         doc.roundedRect(14, 45, 58, 30, 4, 4, "F");
         doc.setTextColor(255, 255, 255);
@@ -226,7 +220,6 @@ export const AiAssistant: React.FC = () => {
         doc.setFontSize(18);
         doc.text(total.toString(), 19, 68);
 
-        // Só Tag (Orange)
         doc.setFillColor(245, 158, 11);
         doc.roundedRect(76, 45, 58, 30, 4, 4, "F");
         doc.setTextColor(0, 0, 0);
@@ -236,7 +229,6 @@ export const AiAssistant: React.FC = () => {
         const soTagPerc = total > 0 ? ((soTag / total) * 100).toFixed(1) : "0";
         doc.text(`${soTag} (${soTagPerc}%)`, 81, 68);
 
-        // Tag + Tracker (Grey)
         doc.setFillColor(244, 244, 245);
         doc.roundedRect(138, 45, 58, 30, 4, 4, "F");
         doc.setTextColor(24, 24, 27);
@@ -246,7 +238,6 @@ export const AiAssistant: React.FC = () => {
         const tagTrackerPerc = total > 0 ? ((tagTracker / total) * 100).toFixed(1) : "0";
         doc.text(`${tagTracker} (${tagTrackerPerc}%)`, 143, 68);
 
-        // 3. DISTRIBUIÇÃO POR CATEGORIA
         doc.setFont("helvetica", "bold");
         doc.setFontSize(14);
         doc.setTextColor(24, 24, 27);
@@ -272,7 +263,6 @@ export const AiAssistant: React.FC = () => {
             headStyles: { fillColor: [63, 63, 70], textColor: [255, 255, 255] }
         });
 
-        // 4. LISTAGEM DETALHADA
         doc.setFontSize(14);
         doc.text("Listagem Detalhada de Veículos", 14, (doc as any).lastAutoTable.finalY + 15);
 
@@ -332,9 +322,11 @@ export const AiAssistant: React.FC = () => {
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
+      const history: any[] = [{ role: 'user', parts: [{ text: userMsg }] }];
+      
+      let currentResponse: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: userMsg,
+        contents: history,
         config: {
             tools: [{ functionDeclarations: [getVehicleLocationTool, getFleetStatsTool, prepareRegistrationDraftTool, generateReportTool, commitRegistrationTool] }],
             systemInstruction: `Você é o **Operador K-TAG Intelligence**, focado em automação e segurança.
@@ -352,10 +344,11 @@ export const AiAssistant: React.FC = () => {
         }
       });
 
-      let currentResponse = response;
-      
-      while (currentResponse.functionCalls && currentResponse.functionCalls.length > 0) {
-        const toolResponses = await Promise.all(
+      while (currentResponse.candidates && currentResponse.candidates.length > 0 && currentResponse.functionCalls && currentResponse.functionCalls.length > 0) {
+        const modelContent = currentResponse.candidates[0].content;
+        history.push(modelContent);
+
+        const toolParts = await Promise.all(
           currentResponse.functionCalls.map(async (call) => {
             const result = await handleToolExecution(call);
             return {
@@ -364,13 +357,11 @@ export const AiAssistant: React.FC = () => {
           })
         );
 
+        history.push({ role: 'tool', parts: toolParts });
+
         currentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
-          contents: [
-            { role: 'user', parts: [{ text: userMsg }] },
-            currentResponse.candidates[0].content,
-            { role: 'function', parts: toolResponses }
-          ],
+          contents: history,
           config: {
              tools: [{ functionDeclarations: [getVehicleLocationTool, getFleetStatsTool, prepareRegistrationDraftTool, generateReportTool, commitRegistrationTool] }]
           }

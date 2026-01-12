@@ -1,15 +1,11 @@
+
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 /**
- * Dependências que podem ser externalizadas SOMENTE no build,
- * e APENAS se futuramente você mudar para:
- * - microfrontend
- * - build via CDN
- *
- * ⚠️ NÃO coloque react / react-dom aqui
+ * Dependências que podem ser externalizadas SOMENTE no build
  */
-const BUILD_EXTERNALS = [
+const BUILD_EXTERNALS: string[] = [
   // Exemplo de libs pesadas que podem virar CDN no futuro
   // 'xlsx',
   // 'jspdf',
@@ -19,13 +15,12 @@ const BUILD_EXTERNALS = [
 /**
  * Prefixos que podem ser tratados como externos no build
  */
-const BUILD_EXTERNAL_PREFIXES = [
+const BUILD_EXTERNAL_PREFIXES: string[] = [
   // 'firebase'
 ];
 
 export default defineConfig(({ mode }) => {
   // Carrega variáveis de ambiente conforme modo (dev / prod)
-  // Use '.' instead of process.cwd() to resolve type error
   const env = loadEnv(mode, '.', '');
 
   return {
@@ -50,7 +45,6 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         /**
          * ⚠️ Externalização controlada
-         * Somente aplicada se você realmente precisar
          */
         external: (id: string) => {
           if (BUILD_EXTERNALS.includes(id)) return true;
