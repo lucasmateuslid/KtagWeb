@@ -1,0 +1,425 @@
+
+import * as React from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { storage } from '../services/storage';
+
+type Language = 'pt' | 'en';
+
+const translations = {
+  en: {
+    dashboard: 'Dashboard',
+    liveMap: 'Live Map',
+    tags: 'Tags',
+    vehicles: 'Vehicles',
+    users: 'Users',
+    reports: 'Reports',
+    settings: 'Settings',
+    signOut: 'Sign Out',
+    systemOnline: 'System Online',
+    syncing: 'Syncing Data...',
+    connectionError: 'Connection Error',
+    offline: 'Offline Mode',
+    notifications: 'Notifications',
+    clearAll: 'Clear all',
+    noNotifications: 'No notifications',
+
+    overview: 'Dashboard Overview',
+    quickActions: 'Quick Actions',
+    recentActivity: 'Recent Activity',
+    totalTags: 'Total Tags',
+    totalVehicles: 'Total Vehicles',
+    linkedTags: 'Linked Tags',
+    unlinkedTags: 'Unlinked Tags',
+    tagLinkStatus: 'Tag Link Status',
+    vehicleDist: 'Vehicle Distribution',
+    cars: 'Cars',
+    trucks: 'Trucks',
+    motorcycles: 'Motorcycles',
+    
+    // New Metrics Charts
+    vehiclesByCompany: 'Vehicles by Company',
+    vehicleEntryTrend: 'Vehicle Acquisition Trend (Monthly)',
+    total: 'Total',
+    entries: 'Entries',
+
+    // Reports Page (New)
+    reportPeriod: 'Analysis Period',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    filter: 'Filter',
+    totalInclusions: 'Total Inclusions',
+    inclusionsByDay: 'Inclusions by Day',
+    byCategory: 'By Category',
+    byInstallation: 'By Installation Type',
+    tagOnly: 'Tag Only',
+    tagTracker: 'Tag + Tracker',
+    vehicleList: 'Vehicle List',
+    inclusionDate: 'Inclusion Date',
+    exportPDF: 'Export PDF',
+    exportExcel: 'Export Excel',
+    noDataPeriod: 'No records found for the selected period.',
+
+    tagManagement: 'Tag Management',
+    searchTags: 'Search by Name, SN, MAC or Plate...',
+    deleteSelected: 'Delete Selected',
+    importCSV: 'Import CSV',
+    addTag: 'Add Tag',
+    selectAll: 'Select All',
+    noTags: 'No tags found matching your search.',
+    editTag: 'Edit Tag',
+    newTag: 'Register New Tag',
+    tagName: 'Tag Name (Key)',
+    accessoryId: 'Accessory ID (SN)',
+    macAddress: 'MAC Address',
+    hashedKey: 'Hashed Adv Key',
+    privateKey: 'Private Key',
+    saveTag: 'Save Tag',
+    importSuccess: 'Successfully imported tags.',
+    deleteConfirm: 'Are you sure you want to delete this tag?',
+    saveConfirm: 'Are you sure you want to save changes to this tag?',
+    massDeleteConfirm: 'Are you sure you want to delete selected tags?',
+
+    vehicleFleet: 'Vehicles',
+    addVehicle: 'Add Vehicle',
+    type: 'Category',
+    model: 'Model',
+    year: 'Year',
+    plate: 'Plate',
+    linkedTag: 'Linked Tag',
+    actions: 'Actions',
+    noVehicles: 'No vehicles found.',
+    editVehicle: 'Edit Vehicle',
+    newVehicle: 'New Vehicle',
+    searchFipe: 'Search FIPE Table',
+    selectBrand: 'Select Brand',
+    selectModel: 'Select Model',
+    selectYear: 'Select Year',
+    loadingFipe: 'Loading FIPE data...',
+    saveVehicle: 'Save Vehicle',
+    noLink: '-- No Link --',
+    company: 'Company',
+    selectCompany: 'Select Company',
+    manageCompanies: 'Manage Companies',
+    manageCategories: 'Manage Categories',
+    companyName: 'Company Name',
+    prefix: 'Prefix (Initials)',
+    addCompany: 'Add Company',
+    addCategory: 'Add Category',
+    categoryName: 'Category Name',
+    fipeMapping: 'FIPE API Type',
+    noFipe: 'No FIPE Integration',
+    searchPlate: 'Search Plate',
+    searchingPlate: 'Searching Plate (Real API)...',
+    plateFound: 'Vehicle found!',
+    plateNotFound: 'Plate not found.',
+    
+    // Plate API
+    plateApiConfig: 'License Plate API Configuration',
+    plateApiUrl: 'API URL',
+    plateApiUrlDesc: 'Use {plate} as placeholder. Ex: https://api.xyz.com/v1/{plate}',
+    plateApiToken: 'API Token/Key',
+
+    selectTracker: 'Select Tracker',
+    searchTracker: 'Search tracker...',
+    action: 'Action',
+    startTracking: 'Start Tracking',
+    stop: 'Stop',
+    linkedVehicle: 'Linked Vehicle',
+    noVehicleLinked: 'No vehicle linked',
+    liveData: 'Live Data',
+    pointsFound: 'points found',
+    updating: 'Updating...',
+    noHistory: 'No location history available.',
+    refresh: 'Refresh',
+    exportCSV: 'CSV',
+    shareLocation: 'Share Location',
+    locationCopied: 'Location link copied to clipboard!',
+    resolveAddress: 'Resolve Address',
+    resolving: 'Resolving...',
+    address: 'Address',
+    clearHistory: 'Clear History',
+    clearConfirm: 'Are you sure you want to clear all location history for this tag? This cannot be undone.',
+    historyCleared: 'Location history cleared successfully.',
+    
+    repDate: 'Date/Time',
+    repLat: 'Latitude',
+    repLon: 'Longitude',
+    repSpeed: 'Conf',
+    repAddr: 'Address',
+    repTitle: 'Location Report',
+    repVehicle: 'Vehicle',
+    repStatus: 'Status',
+    repTimestamp: 'Timestamp',
+
+    systemSettings: 'System Settings',
+    manageConfig: 'Manage API connections, credentials, and external services',
+    generalSettings: 'General Settings',
+    language: 'Language',
+    proxyConfig: 'Proxy / Backend Configuration',
+    cloudFunctionUrl: 'Cloud Function URL (Firebase)',
+    cloudFunctionDesc: 'Deploy the provided function to Firebase and paste the URL here to fix CORS/HTTP issues.',
+    ktagConfig: 'K-Tag API Configuration',
+    apiEndpoint: 'API Endpoint URL',
+    directIpDesc: 'Direct IP or Domain.',
+    username: 'Username',
+    password: 'Password',
+    mapProviders: 'Map Providers',
+    googleKey: 'Chave API Google Maps (Javascript)',
+    googleDesc: 'Leave empty to use OpenStreetMap.',
+    mapboxKey: 'Mapbox Access Token',
+    saveConfig: 'Save Configuration',
+    savedSuccess: 'Settings Saved',
+    savedError: 'Failed to save settings',
+    
+    myProfile: 'My Profile',
+    editProfile: 'Edit Profile',
+    cancelEdit: 'Cancel',
+    saveProfile: 'Save Profile',
+    newPassword: 'New Password',
+    optional: 'Optional',
+    profileSaved: 'Profile updated successfully',
+
+    portalTitle: 'K-TAG Portal',
+    portalSubtitle: 'Professional Tracking Management',
+    fullName: 'Full Name',
+    email: 'Email Address',
+    signIn: 'Sign In',
+    createAccount: 'Create Account',
+    haveAccount: 'Already have an account? Sign in',
+    noAccount: "Don't have an account? Sign up",
+    
+    // Users Page
+    userManagement: 'User Management',
+    manageAccess: 'Control system access and permissions',
+    pendingUsers: 'Pending Approval',
+    activeUsers: 'Active Users',
+  },
+  pt: {
+    dashboard: 'Painel de Controle',
+    liveMap: 'Mapa ao Vivo',
+    tags: 'Tags',
+    vehicles: 'Veículos',
+    users: 'Usuários',
+    reports: 'Relatórios',
+    settings: 'Configurações',
+    signOut: 'Sair',
+    systemOnline: 'Sistema Online',
+    syncing: 'Sincronizando...',
+    connectionError: 'Erro de Conexão',
+    offline: 'Modo Offline',
+    notifications: 'Notificações',
+    clearAll: 'Limpar tudo',
+    noNotifications: 'Sem notificações',
+
+    overview: 'Visão Geral',
+    quickActions: 'Ações Rápidas',
+    recentActivity: 'Atividade Recente',
+    totalTags: 'Total de Tags',
+    totalVehicles: 'Total de Veículos',
+    linkedTags: 'Tags Vinculadas',
+    unlinkedTags: 'Tags Soltas',
+    tagLinkStatus: 'Status de Vínculo',
+    vehicleDist: 'Distribuição da Frota',
+    cars: 'Carros',
+    trucks: 'Caminhões',
+    motorcycles: 'Motos',
+
+    // New Metrics Charts
+    vehiclesByCompany: 'Veículos por Empresa',
+    vehicleEntryTrend: 'Tendência de Entrada (Mensal)',
+    total: 'Total',
+    entries: 'Entradas',
+
+    // Reports Page (New)
+    reportPeriod: 'Período de Análise',
+    startDate: 'Data Inicial',
+    endDate: 'Data Final',
+    filter: 'Filtrar',
+    totalInclusions: 'Total de Inclusões',
+    inclusionsByDay: 'Inclusões por Dia',
+    byCategory: 'Por Categoria',
+    byInstallation: 'Por Instalação',
+    tagOnly: 'Só Tag',
+    tagTracker: 'Tag + Rastreador',
+    vehicleList: 'Lista de Veículos',
+    inclusionDate: 'Data Inclusão',
+    exportPDF: 'Exportar PDF',
+    exportExcel: 'Exportar Excel',
+    noDataPeriod: 'Nenhum registro encontrado para o período selecionado.',
+
+    tagManagement: 'Gerenciamento de Tags',
+    searchTags: 'Buscar por Nome, SN, MAC ou Placa...',
+    deleteSelected: 'Excluir Selecionados',
+    importCSV: 'Importar CSV',
+    addTag: 'Adicionar Tag',
+    selectAll: 'Selecionar Todos',
+    noTags: 'Nenhuma tag encontrada para sua busca.',
+    editTag: 'Editar Tag',
+    newTag: 'Registrar Nova Tag',
+    tagName: 'Nome da Tag (Chave)',
+    accessoryId: 'ID do Acessório (SN)',
+    macAddress: 'Endereço MAC',
+    hashedKey: 'Chave Pública (Hashed)',
+    privateKey: 'Chave Privada',
+    saveTag: 'Salvar Tag',
+    importSuccess: 'Tags importadas com sucesso.',
+    deleteConfirm: 'Tem certeza que deseja excluir esta tag?',
+    saveConfirm: 'Tem certeza que deseja salvar alterações nesta tag?',
+    massDeleteConfirm: 'Tem certeza que deseja excluir as tags selecionadas?',
+
+    vehicleFleet: 'Veículos',
+    addVehicle: 'Adicionar Veículo',
+    type: 'Categoria',
+    model: 'Modelo',
+    year: 'Ano',
+    plate: 'Placa',
+    linkedTag: 'Tag Vinculada',
+    actions: 'Ações',
+    noVehicles: 'Nenhum veículo encontrado.',
+    editVehicle: 'Editar Veículo',
+    newVehicle: 'Novo Veículo',
+    searchFipe: 'Consultar Tabela FIPE',
+    selectBrand: 'Selecione a Marca',
+    selectModel: 'Selecione o Modelo',
+    selectYear: 'Selecione o Ano',
+    loadingFipe: 'Carregando FIPE...',
+    saveVehicle: 'Salvar Veículo',
+    noLink: '-- Sem Vínculo --',
+    company: 'Empresa',
+    selectCompany: 'Selecione a Empresa',
+    manageCompanies: 'Gerenciar Empresas',
+    manageCategories: 'Gerenciar Categorias de Veículos',
+    companyName: 'Nome da Empresa',
+    prefix: 'Prefixo (Iniciais)',
+    addCompany: 'Adicionar Empresa',
+    addCategory: 'Adicionar Categoria',
+    categoryName: 'Nome da Categoria',
+    fipeMapping: 'Tipo API FIPE',
+    noFipe: 'Sem Integração FIPE',
+    searchPlate: 'Buscar Placa',
+    searchingPlate: 'Buscando Placa (API Real)...',
+    plateFound: 'Veículo encontrado!',
+    plateNotFound: 'Placa não encontrada.',
+    
+    // Plate API
+    plateApiConfig: 'Configuração API de Placas (Externa)',
+    plateApiUrl: 'URL da API',
+    plateApiUrlDesc: 'Use {plate} onde vai a placa. Ex: https://api.xyz.com/v1/{plate}',
+    plateApiToken: 'Token/Chave da API',
+
+    selectTracker: 'Selecionar Rastreador',
+    searchTracker: 'Buscar rastreador...',
+    action: 'Ação',
+    startTracking: 'Iniciar Rastreio',
+    stop: 'Parar',
+    linkedVehicle: 'Veículo Vinculado',
+    noVehicleLinked: 'Nenhum veículo',
+    liveData: 'Dados em Tempo Real',
+    pointsFound: 'pontos encontrados',
+    updating: 'Atualizando...',
+    noHistory: 'Sem histórico de localização.',
+    refresh: 'Atualizar',
+    exportCSV: 'CSV',
+    shareLocation: 'Compartilhar Local',
+    locationCopied: 'Link de localização copiado!',
+    resolveAddress: 'Resolver Endereços',
+    resolving: 'Resolvendo...',
+    address: 'Endereço',
+    clearHistory: 'Limpar Histórico',
+    clearConfirm: 'Tem certeza que deseja limpar todo o histórico de localização desta tag? Isso não pode ser desfeito.',
+    historyCleared: 'Histórico limpo com sucesso.',
+
+    repDate: 'Data/Hora',
+    repLat: 'Latitude',
+    repLon: 'Longitude',
+    repSpeed: 'Conf',
+    repAddr: 'Endereço',
+    repTitle: 'Relatório de Localização',
+    repVehicle: 'Veículo',
+    repStatus: 'Status',
+    repTimestamp: 'Timestamp',
+
+    systemSettings: 'Configurações do Sistema',
+    manageConfig: 'Gerencie conexões de API, credenciais e serviços externos',
+    generalSettings: 'Geral',
+    language: 'Idioma',
+    proxyConfig: 'Configuração de Proxy / Backend',
+    cloudFunctionUrl: 'URL da Cloud Function (Firebase)',
+    cloudFunctionDesc: 'Implante a função fornecida no Firebase e cole a URL aqui para corrigir problemas de CORS/HTTP.',
+    ktagConfig: 'Configuração API K-Tag',
+    apiEndpoint: 'URL do Endpoint',
+    directIpDesc: 'IP Direto ou Domínio.',
+    username: 'Usuário',
+    password: 'Senha',
+    mapProviders: 'Provedores de Mapa',
+    googleKey: 'Chave API Google Maps (Javascript)',
+    googleDesc: 'Deixe vazio para usar OpenStreetMap.',
+    mapboxKey: 'Token de Acesso Mapbox',
+    saveConfig: 'Salvar Configuração',
+    savedSuccess: 'Configurações Salvas',
+    savedError: 'Falha ao salvar configurações',
+    
+    myProfile: 'Meu Perfil',
+    editProfile: 'Editar Perfil',
+    cancelEdit: 'Cancelar',
+    saveProfile: 'Salvar Perfil',
+    newPassword: 'Nova Senha',
+    optional: 'Opcional',
+    profileSaved: 'Perfil atualizado com sucesso',
+
+    portalTitle: 'K-TAG Portal',
+    portalSubtitle: 'Gestão Profissional de Rastreamento',
+    fullName: 'Nome Completo',
+    email: 'Endereço de Email',
+    signIn: 'Entrar',
+    createAccount: 'Criar Conta',
+    haveAccount: 'Já tem uma conta? Entre',
+    noAccount: "Não tem conta? Cadastre-se",
+
+    // Users Page
+    userManagement: 'Gestão de Usuários',
+    manageAccess: 'Controle de acesso e permissões do sistema',
+    pendingUsers: 'Aprovação Pendente',
+    activeUsers: 'Usuários Ativos',
+  }
+};
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: keyof typeof translations['en']) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export const LanguageProvider = ({ children }: { children?: ReactNode }) => {
+  const [language, setLanguage] = useState<Language>('pt');
+
+  useEffect(() => {
+    const init = async () => {
+      const settings = await storage.getSettings();
+      if (settings.language) setLanguage(settings.language);
+    };
+    init();
+  }, []);
+
+  const changeLanguage = (lang: Language) => {
+    setLanguage(lang);
+  };
+
+  const t = (key: keyof typeof translations['en']): string => {
+    return translations[language][key] || key;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage: changeLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error("useLanguage must be used within a LanguageProvider");
+  return context;
+};
